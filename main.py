@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import pytz
-from trial_analysis.routes import routes
+from trial_document_search.routes import routes
 app = FastAPI()
 
 # Set Mumbai timezone (IST)

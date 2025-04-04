@@ -1,4 +1,4 @@
-from trial_analysis.utils.logger_setup import logger
+from trial_document_search.utils.logger_setup import logger
 from database.mongo_db_connection import MongoDBDAO
 
 

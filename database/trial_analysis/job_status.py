@@ -1,6 +1,6 @@
 from database.mongo_db_connection import MongoDBDAO
 from datetime import datetime
-from trial_analysis.models.db_models import JobLog, JobStatus
+from trial_document_search.models.db_models import JobLog, JobStatus
 
 # Initialize MongoDB Data Access Object (DAO)
 dao = MongoDBDAO()

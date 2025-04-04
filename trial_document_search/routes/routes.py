@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, status
-from trial_analysis.models.routes_models import BaseResponse, DocumentFilters
-from trial_analysis.services.similar_trail_documents_reterival_service import fetch_similar_trail_documents
-from trial_analysis.utils.logger_setup import logger
+from trial_document_search.models.routes_models import BaseResponse, DocumentFilters
+from trial_document_search.services.similar_trail_documents_reterival_service import fetch_similar_trail_documents
+from trial_document_search.utils.logger_setup import logger
 from datetime import datetime
 
 router = APIRouter()

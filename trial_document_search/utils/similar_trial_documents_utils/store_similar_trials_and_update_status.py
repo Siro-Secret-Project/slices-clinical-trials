@@ -1,6 +1,6 @@
 from database.trial_analysis.store_similar_trials import store_similar_trials
 from database.trial_analysis.update_workflow_status import update_workflow_status
-from trial_analysis.utils.logger_setup import logger
+from trial_document_search.utils.logger_setup import logger
 from datetime import datetime
 from database.trial_analysis.job_status import update_job
 

@@ -1,5 +1,5 @@
 from database.trial_analysis.store_similar_trials import store_similar_trials
-from trial_analysis.utils.logger_setup import logger
+from trial_document_search.utils.logger_setup import logger
 
 def store_and_return_empty_response(user_data: dict, user_inputs: dict, final_response: dict) -> None:
     """

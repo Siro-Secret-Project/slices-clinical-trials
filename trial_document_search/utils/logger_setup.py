@@ -2,7 +2,7 @@ import logging
 
 
 class Logger:
-    def __init__(self, name="trial_analysis", level=logging.DEBUG):
+    def __init__(self, name="trial_document_search", level=logging.DEBUG):
         """
         Initializes a logger with a console handler.
         :param name: Name of the logger

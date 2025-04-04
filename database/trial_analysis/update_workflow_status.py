@@ -1,6 +1,6 @@
 from datetime import datetime
 from database.mongo_db_connection import MongoDBDAO
-from trial_analysis.models.db_models import WorkflowStates
+from trial_document_search.models.db_models import WorkflowStates
 
 # Initialize MongoDB Data Access Object (DAO)
 mongo_dao = MongoDBDAO()

@@ -1,5 +1,5 @@
-from trial_analysis.utils.similar_trial_documents_utils.fetch_trial_filters import fetch_trial_filters
-from trial_analysis.utils.similar_trial_documents_utils.process_trial_filters import process_filters
+from trial_document_search.utils.similar_trial_documents_utils.fetch_trial_filters import fetch_trial_filters
+from trial_document_search.utils.similar_trial_documents_utils.process_trial_filters import process_filters
 def filter_documents(unique_documents: dict, document_filters: dict) -> list:
     """
     Filter documents based on additional filters.
