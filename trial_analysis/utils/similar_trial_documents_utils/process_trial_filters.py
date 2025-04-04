@@ -1,40 +1,43 @@
 from trial_analysis.utils.logger_setup import logger
-def process_filters(documents, filters):
+
+
+def process_filters(documents: list, filters: dict) -> list:
+    """Filter documents based on multiple criteria with different logics."""
     try:
-        filtered_docs = []
+        def passes_phases(doc):
+            return not filters['phases'] or any(p in filters['phases'] for p in doc['phases'])
 
-        for doc in documents:
-            # Check phase match (OR logic)
-            if filters['phases'] and not any(phase in filters['phases'] for phase in doc['phases']):
-                continue
+        def passes_locations(doc):
+            if not filters['locations']:
+                return True
+            if filters['countryLogic'] == 'AND':
+                return all(loc in doc['locations'] for loc in filters['locations'])
+            return any(loc in doc['locations'] for loc in filters['locations'])
 
-            # Check location match based on countryLogic
-            if filters['locations']:
-                if filters['countryLogic'] == 'AND':
-                    if not all(loc in doc['locations'] for loc in filters['locations']):
-                        continue
-                else:  # OR logic
-                    if not any(loc in doc['locations'] for loc in filters['locations']):
-                        continue
+        def passes_sponsor(doc):
+            return not filters['sponsorType'] or doc['sponsorType'] == filters['sponsorType']
 
-            # Check sponsorType match
-            if filters['sponsorType'] and doc['sponsorType'] != filters['sponsorType']:
-                continue
+        def passes_dates(doc):
+            if not (filters['startDate'] and filters['endDate']):
+                return True
+            return (filters['startDate'] <= doc['startDate'] <= filters['endDate'] and
+                    filters['startDate'] <= doc['endDate'] <= filters['endDate'])
 
-            # Check date range
-            if filters['startDate'] and filters['endDate']:
-                if not (filters['startDate'] <= doc['startDate'] <= filters['endDate'] and
-                        filters['startDate'] <= doc['endDate'] <= filters['endDate']):
-                    continue
+        def passes_sample_size(doc):
+            if None in (filters['sampleSizeMin'], filters['sampleSizeMax']):
+                return True
+            return filters['sampleSizeMin'] <= doc['enrollmentCount'] <= filters['sampleSizeMax']
 
-            # Check sample size range
-            if filters['sampleSizeMin'] is not None and filters['sampleSizeMax'] is not None:
-                if not (filters['sampleSizeMin'] <= doc['enrollmentCount'] <= filters['sampleSizeMax']):
-                    continue
+        filtered = [
+            doc for doc in documents
+            if all([ passes_phases(doc), passes_locations(doc), passes_sponsor(doc), passes_dates(doc),
+                passes_sample_size(doc)
+            ])
+        ]
 
-            filtered_docs.append(doc)
-        logger.debug(f"Filtered {len(filtered_docs)} documents")
-        return filtered_docs
+        logger.debug(f"Filtered {len(filtered)} documents")
+        return filtered
+
     except Exception as e:
-        logger.error(f"Failed to process filters: {e}")
+        logger.error(f"Failed to apply filters: {e}")
         return documents
