@@ -15,7 +15,7 @@ class WeightsModel(BaseModel):
     trialOutcomes: float = Field(0, ge=0, le=1)
 
 class DocumentSearch(BaseModel):
-    ecid: str
+    trialId: str
     userName: str
     rationale: str
     objective: str

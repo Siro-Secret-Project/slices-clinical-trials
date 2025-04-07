@@ -28,7 +28,7 @@ def store_similar_trials(user_name: str, ecid: str, user_input: dict, similar_tr
         # Create a document instance using the StoreSimilarTrials model
         document = StoreSimilarTrials(
             userName=user_name,
-            ecid=ecid,
+            trialId=ecid,
             userInput=user_input,
             similarTrials=similar_trials,
             createdAt=datetime.now(),  # Timestamp for record creation

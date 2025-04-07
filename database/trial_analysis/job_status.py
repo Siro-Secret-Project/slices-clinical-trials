@@ -15,7 +15,7 @@ def create_empty_job(ecid: str, user_name: str) -> dict:
         "data": None
     }
     try:
-        job_log = JobLog(ecid=ecid, userName=user_name, createdAt=datetime.now(), updatedAt=datetime.now())
+        job_log = JobLog(trialId=ecid, userName=user_name, createdAt=datetime.now(), updatedAt=datetime.now())
         dao.insert("job_status", job_log.model_dump())
         final_response["success"] = True
         final_response["message"] = "Job log created successfully"

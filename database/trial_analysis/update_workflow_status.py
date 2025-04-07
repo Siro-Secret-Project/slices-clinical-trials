@@ -54,7 +54,7 @@ def update_workflow_status(ecid: str, step: str) -> dict:
 
         # Create an updated document instance
         document = WorkflowStates(
-            ecid=ecid,
+            trialId=ecid,
             step=step,
             status="completed",
             createdAt=created_at,

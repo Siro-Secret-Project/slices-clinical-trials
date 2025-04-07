@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class StoreSimilarTrials(BaseModel):
-    ecid: str
+    trialId: str
     userName: str
     userInput: dict
     similarTrials: list
@@ -20,7 +20,7 @@ class JobStatus(BaseModel):
     finishedAt: Optional[datetime] = None
 
 class JobLog(BaseModel):
-    ecid: str
+    trialId: str
     userName: str
     documentSearch: Optional[JobStatus] = None
     criteriaCreation: Optional[JobStatus] = None
@@ -28,7 +28,7 @@ class JobLog(BaseModel):
     updatedAt: datetime
 
 class WorkflowStates(BaseModel):
-    ecid: str
+    trialId: str
     step: str
     status: str
     createdAt: datetime
