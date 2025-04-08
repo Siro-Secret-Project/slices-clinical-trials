@@ -1,8 +1,8 @@
-from database.trial_analysis.store_similar_trials import store_similar_trials
-from database.trial_analysis.update_workflow_status import update_workflow_status
+from database.trial_document_search.store_similar_trials import store_similar_trials
+from database.trial_document_search.update_workflow_status import update_workflow_status
 from trial_document_search.utils.logger_setup import logger
 from datetime import datetime
-from database.trial_analysis.job_status import update_job
+from database.trial_document_search.job_status import update_job
 
 def store_similar_trials_and_update_status(user_data: dict, user_inputs: dict, trial_documents: list, final_response: dict) -> None:
     """

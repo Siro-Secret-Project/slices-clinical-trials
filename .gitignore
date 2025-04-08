@@ -172,3 +172,4 @@ cython_debug/
 
 # Local Docker File
 Dockerfile.dev
+docker-compose.yml
