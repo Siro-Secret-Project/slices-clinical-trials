@@ -12,7 +12,7 @@ def store_and_return_empty_response(user_data: dict, user_inputs: dict, final_re
     """
     db_response = store_similar_trials(
         user_name=user_data["userName"],
-        ecid=user_data["ecid"],
+        trialId=user_data["trialId"],
         user_input=user_inputs,
         similar_trials=[],
     )

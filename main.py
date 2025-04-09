@@ -1,8 +1,10 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
 import pytz
-from trial_document_search.routes import routes
+from fastapi import FastAPI
+from datetime import datetime
+from trial_document_search.routes import routes as search_routes
+from fastapi.middleware.cors import CORSMiddleware
+from trial_criteria_generation.routes import routes as criteria_routes
+
 app = FastAPI()
 
 # Set Mumbai timezone (IST)
@@ -20,7 +22,8 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-app.include_router(routes.router, prefix="/api/v1/ml", tags=["api"])
+app.include_router(search_routes.router, prefix="/api/v1/ml", tags=["api"])
+app.include_router(criteria_routes.router, prefix="/api/v1/criteria", tags=["api"])
 
 @app.get("/")
 async def root():

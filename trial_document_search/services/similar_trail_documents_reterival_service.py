@@ -31,11 +31,11 @@ def fetch_similar_trail_documents(documents_search_keys: dict, custom_weights: d
     trial_documents = []
 
     # Create an Empty Job Log with no Job
-    create_job_response = create_empty_job(ecid=user_data["ecid"], user_name=user_data["userName"])
+    create_job_response = create_empty_job(trialId=user_data["trialId"], user_name=user_data["userName"])
     logger.debug(create_job_response["message"])
 
     # Add Document Search Job to Job Log
-    add_job_response = add_job(ecid=user_data["ecid"], job_id=1)
+    add_job_response = add_job(trialId=user_data["trialId"], job_id=1)
     logger.debug(add_job_response["message"])
     try:
 

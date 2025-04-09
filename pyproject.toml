@@ -24,6 +24,8 @@ boto3 = "^1.37.7"
 pypdf2 = "^3.0.1"
 python-multipart = "^0.0.20"
 pytest = "^8.3.5"
+redis = "^5.2.1"
+rq = "^2.3.1"
 
 
 [build-system]

@@ -30,7 +30,7 @@ async def search_routes_new(request: DocumentFilters, response: Response):
         # Extract inputs for user identification
         user_data = {
             "userName": request.userName,
-            "ecid": request.trialId
+            "trialId": request.trialId
         }
 
         # Extract input for Document Search
