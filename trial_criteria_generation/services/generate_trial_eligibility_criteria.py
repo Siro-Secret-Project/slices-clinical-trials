@@ -12,6 +12,7 @@ from trial_criteria_generation.utils.assign_unique_ids import assign_unique_ids
 from trial_criteria_generation.utils.fetch_user_inputs import fetch_user_inputs
 from trial_criteria_generation.utils.fetch_endpoints_module import fetch_endpoints_module
 from trial_criteria_generation.utils.fetch_additional_metrics import fetch_additional_metrics
+from trial_criteria_generation.utils.process_categorized_data import process_categorized_data
 from trial_criteria_generation.utils.prepare_similar_documents import prepare_similar_documents
 from trial_criteria_generation.utils.categorize_and_merge_data import categorize_and_merge_data
 
@@ -95,11 +96,21 @@ def generate_trial_eligibility_criteria(trialId: str, trail_documents_ids: List[
             logger.debug(f"Successfully fetched additional metrics")
             metrics_data = additional_metrics_response["data"] | categorized_data["metrics_data"]
 
+
         # Fetch the metrics from the Primary Endpoint Module
         primary_endpoints = fetch_endpoints_module(trail_documents_ids)
 
+        # Process Categorised data in axis one format
+        categorized_data_copy = categorized_data["categorized_generated_data"].copy()
+        processed_data_response = process_categorized_data(categorized_data=categorized_data_copy)
+
         # Store the data and workflow status into Mongo DB
-        db_response = record_eligibility_criteria_job(trialId, categorized_data["categorized_generated_data"], categorized_data["categorized_user_data"], metrics_data, primary_endpoints)
+        db_response = record_eligibility_criteria_job(trialId,
+                                                      categorized_data["categorized_generated_data"],
+                                                      categorized_data["categorized_user_data"],
+                                                      metrics_data,
+                                                      primary_endpoints,
+                                                      processed_data_response)
         store_notification_data(trialId=trialId)
 
         final_response["data"] = primary_endpoints

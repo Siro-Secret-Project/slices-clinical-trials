@@ -213,6 +213,7 @@ def calculate_trial_operational_score(document_id_list: list, categorized_data: 
             # For Inclusion Criteria
             for item in criteria["Inclusion"]:
                 trial_operational_score = 0
+                best_trial_id = None
                 for trail_id, statement in item["source"].items():
                     similar_documents_id = lambda similar_trials, current_id: list(filter(lambda x: x != current_id, similar_trials))
                     similar_documents_list = similar_documents_id(document_id_list, trail_id)
@@ -224,12 +225,16 @@ def calculate_trial_operational_score(document_id_list: list, categorized_data: 
                     except:
                         operational_score = 0
                     trial_operational_score = max(trial_operational_score, operational_score)
+                    if trial_operational_score == operational_score:
+                        best_trial_id = trail_id
                 item["operational_score"] = round(trial_operational_score, 2)
                 item["count"] = len(item["source"])
+                item["best_trial_id"] = best_trial_id
 
             # For exclusion criteria
             for item in criteria["Exclusion"]:
                 trial_operational_score = 0
+                best_trial_id = None
                 for trail_id, statement in item["source"].items():
                     similar_documents_id = lambda similar_trials, current_id: list(filter(lambda x: x != current_id, similar_trials))
                     similar_documents_list = similar_documents_id(document_id_list, trail_id)
@@ -241,23 +246,12 @@ def calculate_trial_operational_score(document_id_list: list, categorized_data: 
                     except:
                         operational_score = 0
                     trial_operational_score = max(trial_operational_score, operational_score)
+                    if trial_operational_score == operational_score:
+                        best_trial_id = trail_id
                 item["operational_score"] = round(trial_operational_score, 2)
                 item["count"] = len(item["source"])
+                item["best_trial_id"] = best_trial_id
 
-        # Calculate the Percentile Score
-        for category, criteria in categorized_data.items():
-            logger.debug(f"CATEGORY: {category}")
-            all_scores = [item['operational_score'] for item in criteria["Inclusion"]]
-            for item in criteria["Inclusion"]:
-                current_score = item["operational_score"]
-                percentile = get_percentile_score(current_score, all_scores)
-                item["percentile"] = percentile
-
-            all_scores = [item['operational_score'] for item in criteria["Exclusion"]]
-            for item in criteria["Exclusion"]:
-                current_score = item["operational_score"]
-                percentile = get_percentile_score(current_score, all_scores)
-                item["percentile"] = percentile
 
         final_response["success"] = True
         final_response["message"] = "Calculated trial operational score successfully."

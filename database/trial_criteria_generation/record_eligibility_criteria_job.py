@@ -15,6 +15,7 @@ def record_eligibility_criteria_job(
         categorized_data_user: dict,
         metrics_data: dict,
         primary_endpoints: list,
+        processed_categorized_data: dict,
 ) -> dict:
     """
     Stores or updates eligibility criteria in MongoDB.
@@ -28,6 +29,7 @@ def record_eligibility_criteria_job(
         categorized_data_user (dict): New user-provided categorized criteria.
         metrics_data (dict): New metrics data.
         primary_endpoints (list): New primary endpoints.
+        processed_categorized_data (dict): New processed categorized data.
 
     Returns:
         dict: Response containing success status, message, and data.
@@ -113,13 +115,24 @@ def record_eligibility_criteria_job(
             "updatedAt": datetime.now(),
         }
 
-        # # Upsert into MongoDB
+        # Upsert into MongoDB
         db_response = mongo_client.update(
             collection_name="similar_trials_criteria_results",
             update_values=document,
             query={"trialId": job_id},
             upsert=False,
         )
+
+        # Save Processed Data into DB
+        processed_categorized_data["trialId"] = job_id
+        processed_data_response = mongo_client.update(
+            collection_name="trial_axis_trial_results",
+            query={"trialId": job_id},
+            update_values=processed_categorized_data,
+            upsert=True,
+        )
+        logger.info(f"Successfully updated process criteria: {processed_data_response.upserted_id}")
+
 
         # Return the response
         if db_response:
