@@ -46,5 +46,5 @@ def process_categorized_data(categorized_data):
 
     return {
         "final_data": final_list,
-        "tags": all_tags,
+        "tags": list(all_tags),
     }
