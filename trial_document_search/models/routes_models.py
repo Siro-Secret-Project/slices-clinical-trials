@@ -28,7 +28,7 @@ class DocumentSearch(BaseModel):
     weights: WeightsModel
 
 class GenerateEligibilityCriteria(BaseModel):
-    ecid: str
+    trialId: str
     trialDocuments: list
 
 class DocumentFilters(DocumentSearch):

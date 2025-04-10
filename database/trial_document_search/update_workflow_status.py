@@ -6,15 +6,15 @@ from trial_document_search.models.db_models import WorkflowStates
 mongo_dao = MongoDBDAO()
 
 
-def update_workflow_status(ecid: str, step: str) -> dict:
+def update_workflow_status(trialId: str, step: str) -> dict:
     """
     Updates the workflow status document in the MongoDB database.
 
-    This function retrieves an existing workflow status document for the given ECID and step,
+    This function retrieves an existing workflow status document for the given trialId and step,
     updates its status to "completed," and records the update timestamp.
 
     Args:
-        ecid (str): The External Case ID associated with the workflow.
+        trialId (str): The Trial ID associated with the workflow.
         step (str): The specific step in the workflow to update.
 
     Returns:
@@ -27,7 +27,7 @@ def update_workflow_status(ecid: str, step: str) -> dict:
         >>> update_workflow_status("68809b22-3372-45f5-b0fb-b44346bb8efb", "trial-services")
         {
             "success": True,
-            "message": "Successfully updated workflow status document for ECID: 68809b22-3372-45f5-b0fb-b44346bb8efb and step: trial-services",
+            "message": "Successfully updated workflow status document for Trial ID: 68809b22-3372-45f5-b0fb-b44346bb8efb and step: trial-services",
             "data": <UpdateResult object>
         }
     """
@@ -41,12 +41,12 @@ def update_workflow_status(ecid: str, step: str) -> dict:
         # Fetch the workflow status document
         status_document = mongo_dao.find_one(
             collection_name="workflow-states",
-            query={"ecid": ecid, "step": step}
+            query={"trialId": trialId, "step": step}
         )
 
         if status_document is None:
             final_response["message"] = (
-                f"Workflow status document not found for ECID: {ecid} and step: {step}"
+                f"Workflow status document not found for Trial ID: {trialId} and step: {step}"
             )
             return final_response
 
@@ -54,7 +54,7 @@ def update_workflow_status(ecid: str, step: str) -> dict:
 
         # Create an updated document instance
         document = WorkflowStates(
-            trialId=ecid,
+            trialId=trialId,
             step=step,
             status="completed",
             createdAt=created_at,
@@ -65,7 +65,7 @@ def update_workflow_status(ecid: str, step: str) -> dict:
         db_response = mongo_dao.update(
             collection_name="workflow-states",
             update_values=document,
-            query={"ecid": ecid, "step": step}
+            query={"trialId": trialId, "step": step}
         )
 
         # Check if the document was successfully updated
@@ -73,13 +73,13 @@ def update_workflow_status(ecid: str, step: str) -> dict:
             final_response.update({
                 "success": True,
                 "message": (
-                    f"Successfully updated workflow status document for ECID: {ecid} and step: {step}"
+                    f"Successfully updated workflow status document for Trial ID: {trialId} and step: {step}"
                 ),
                 "data": db_response
             })
         else:
             final_response["message"] = (
-                f"Failed to update workflow status document for ECID: {ecid} and step: {step}"
+                f"Failed to update workflow status document for Trial ID: {trialId} and step: {step}"
             )
 
         return final_response

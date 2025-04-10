@@ -1,4 +1,4 @@
-from database.trial_analysis.store_similar_trials import store_similar_trials
+from database.trial_document_search.store_similar_trials import store_similar_trials
 from trial_document_search.utils.logger_setup import logger
 
 def store_and_return_empty_response(user_data: dict, user_inputs: dict, final_response: dict) -> None:
@@ -12,7 +12,7 @@ def store_and_return_empty_response(user_data: dict, user_inputs: dict, final_re
     """
     db_response = store_similar_trials(
         user_name=user_data["userName"],
-        ecid=user_data["ecid"],
+        trialId=user_data["trialId"],
         user_input=user_inputs,
         similar_trials=[],
     )

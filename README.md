@@ -28,7 +28,7 @@ The endpoint accepts a JSON body with the following structure:
 ```json
 {
   "userName": "string",
-  "ecid": "string",
+  "trialId": "string",
   "rationale": "string",
   "condition": "string",
   "inclusionCriteria": "string",
