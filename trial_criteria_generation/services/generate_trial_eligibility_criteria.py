@@ -2,6 +2,7 @@ import concurrent.futures
 from datetime import datetime
 from typing import List, Dict, Any
 from agents.TrialEligibilityAgent import TrialEligibilityAgent
+from agents.TrialEligibilityAgentV2 import TrialEligibilityAgentV2
 from database.trial_document_search.job_status import add_job, update_job
 from database.trial_document_search.update_workflow_status import update_workflow_status
 from database.trial_criteria_generation.store_notification_data import store_notification_data
@@ -15,7 +16,6 @@ from trial_criteria_generation.utils.fetch_additional_metrics import fetch_addit
 from trial_criteria_generation.utils.process_categorized_data import process_categorized_data
 from trial_criteria_generation.utils.prepare_similar_documents import prepare_similar_documents
 from trial_criteria_generation.utils.categorize_and_merge_data import categorize_and_merge_data
-
 
 # Setup Logger
 logger = Logger("trial_eligibility_criteria").get_logger()
@@ -44,7 +44,7 @@ def generate_trial_eligibility_criteria(trialId: str, trail_documents_ids: List[
         logger.info(f"{len(similar_documents)} similar documents found")
 
         # Create an Object for the TrialEligibilityAgent
-        eligibility_agent = TrialEligibilityAgent()
+        eligibility_agent = TrialEligibilityAgentV2()
 
         # Create Empty Lists to store the outputs
         generated_inclusion_criteria = []
@@ -67,20 +67,31 @@ def generate_trial_eligibility_criteria(trialId: str, trail_documents_ids: List[
                 # Merge the Latest Generated data with the existing list
                 generated_inclusion_criteria.extend(result["inclusionCriteria"])
                 generated_exclusion_criteria.extend(result["exclusionCriteria"])
-                drug_ranges.extend(result["drugRanges"])
-                time_line.extend(result["timeFrame"])
 
         # Add unique ids to each criteria
         assign_unique_ids(generated_inclusion_criteria)
         assign_unique_ids(generated_exclusion_criteria)
         logger.debug(f"Generated trial eligibility criteria")
 
+        # Generate Tags
+        for item in generated_inclusion_criteria:
+            criteria = item["criteria"]
+            tags = eligibility_agent.generate_tags(criteria)
+            item["tags"] = tags
+
+        for item in generated_exclusion_criteria:
+            criteria = item["criteria"]
+            tags = eligibility_agent.generate_tags(criteria)
+            item["tags"] = tags
+
         # Categorize the Generated and User Provided data into Predefined buckets
         logger.debug("Categorizing Generated Eligibility")
         similar_documents_ids = [item["nctId"] for item in trial_documents]
+
+        new_eligibility_agent = TrialEligibilityAgent()
         categorized_data = categorize_and_merge_data(
-            generated_inclusion_criteria, generated_exclusion_criteria, drug_ranges, time_line,
-            eligibility_agent, user_inputs.get("inclusionCriteria", "No inclusion criteria provided"),
+            generated_inclusion_criteria, generated_exclusion_criteria,
+            new_eligibility_agent, user_inputs.get("inclusionCriteria", "No inclusion criteria provided"),
             user_inputs.get("exclusionCriteria", "No exclusion criteria provided"),
             trail_documents_ids=similar_documents_ids
         )

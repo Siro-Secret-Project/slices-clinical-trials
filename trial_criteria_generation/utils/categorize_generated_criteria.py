@@ -109,52 +109,75 @@ def _process_criteria(criteria_list, category):
         return []
 
 
+def merge_by_tag(data, tags_not_to_consider: list = []):
+    """
+    Merges entries in the data list based on their tags, combining sources and avoiding redundancy.
+
+    Args:
+        data: List of dictionaries containing clinical criteria data with tags
+        tags_not_to_consider: List of tags to consider
+
+    Returns:
+        List of merged dictionaries with unique tags and combined sources
+    """
+    tag_to_data = {}  # Dictionary to map tags to merged data
+
+    for item in data:
+        for criteria_tag in item["tags"]:
+            # Normalize the tag by removing .0 and spaces for consistency
+            normalized_tag = criteria_tag.replace(".0", "").strip()
+            if normalized_tag in tags_not_to_consider:
+                continue
+            # If tag not seen before, create new entry
+            if normalized_tag not in tag_to_data:
+                tag_to_data[normalized_tag] = {
+                    "criteria": item["criteria"],
+                    "class": item["class"],
+                    "source": item["source"].copy(),
+                    "tags": {normalized_tag},
+                    "criteriaID": item["criteriaID"]  # Keeping first encountered ID
+                }
+            else:
+                # Merge with existing data for this tag
+                existing = tag_to_data[normalized_tag]
+
+                # Update sources (union of both)
+                existing["source"].update(item["source"])
+
+                # Keep the longer criteria text
+                if len(item["criteria"]) > len(existing["criteria"]):
+                    existing["criteria"] = item["criteria"]
+
+                # Add any additional tags (though normalized_tag should be same)
+                existing["tags"].add(normalized_tag)
+
+    # Convert the dictionary values to a list
+    merged_data = list(tag_to_data.values())
+
+    # Convert sets back to lists for consistent output format
+    for item in merged_data:
+        item["tags"] = list(item["tags"])
+
+    return merged_data
+
+
 def categorize_generated_criteria(generated_inclusion_criteria, generated_exclusion_criteria):
     """
     Processes inclusion and exclusion criteria in parallel, merges similar criteria,
     updates source mappings, and assigns new object IDs.
     """
     categorized_data = {}
+    for class_name in criteria_categories:
+        categorized_data.setdefault(class_name, {"Inclusion": [], "Exclusion": []})
 
-    # Use ThreadPoolExecutor for parallel processing
-    # Change max_workers=len(criteria_categories)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        # Submit tasks for inclusion criteria
-        inclusion_futures = {
-            executor.submit(
-                _process_criteria, generated_inclusion_criteria, criteria_category
-            ): (criteria_category, "Inclusion")
-            for criteria_category in criteria_categories
-        }
+    for class_item in criteria_categories:
+        current_list = [item for item in generated_inclusion_criteria if item["class"] == class_item]
+        merged_data = merge_by_tag(current_list)
+        categorized_data[class_item]["Inclusion"] = merged_data
 
-        # Submit tasks for exclusion criteria
-        exclusion_futures = {
-            executor.submit(
-                _process_criteria, generated_exclusion_criteria, criteria_category
-            ): (criteria_category, "Exclusion")
-            for criteria_category in criteria_categories
-        }
-
-        # Combine all futures
-        all_futures = {**inclusion_futures, **exclusion_futures}
-
-        # Process results as they complete
-        for future in concurrent.futures.as_completed(all_futures):
-            criteria_category, criteria_type = all_futures[future]
-            try:
-                result = future.result()
-                categorized_data.setdefault(criteria_category, {"Inclusion": [], "Exclusion": []})
-                categorized_data[criteria_category][criteria_type].extend(result)
-            except Exception as e:
-                logger.exception(f"Error processing {criteria_type} criteria for {criteria_category}: {e}")
-
-    # remove empty categories
-    categories_to_delete = []
-    for category, data in categorized_data.items():
-        if len(data["Inclusion"]) == 0 and len(data["Exclusion"]) == 0:
-            categories_to_delete.append(category)
-
-    for category in categories_to_delete:
-        del categorized_data[category]
+    for class_item in criteria_categories:
+        current_list = [item for item in generated_exclusion_criteria if item["class"] == class_item]
+        merged_data = merge_by_tag(current_list)
+        categorized_data[class_item]["Exclusion"] = merged_data
 
     return categorized_data
