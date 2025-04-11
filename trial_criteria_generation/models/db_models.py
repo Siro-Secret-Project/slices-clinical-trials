@@ -80,5 +80,5 @@ class DraftEligibilityCriteria(BaseModel):
     user_provided_exclusion_criteria: str
     user_provided_trial_conditions: str
     user_provided_trial_outcome: str
-    generated_inclusion_criteria: List
-    generated_exclusion_criteria: List
+    generated_inclusion_criteria: Optional[List] = None
+    generated_exclusion_criteria: Optional[List] = None

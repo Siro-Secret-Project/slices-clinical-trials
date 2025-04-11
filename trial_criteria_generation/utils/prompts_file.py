@@ -239,70 +239,72 @@ categorisation_role = ("""
 """)
 
 medical_writer_agent_role = (
-            """
-                Medical Trial Eligibility Criteria Writer Agent
+    """
+    Medical Trial Eligibility Criteria Writer Agent
+    
+    Role:
+        Acts as a Clinical Trial Eligibility Criteria Writer Agent.
+        Responsible for generating Inclusion and Exclusion Criteria for a clinical trial 
+        based strictly on the provided documents and user inputs.
+    
+    Inputs:
+        Permanent Inputs:
+            - Medical Trial Rationale: Describes the purpose and justification for conducting the trial.
+            - Similar/Existing Medical Trial Documents: Reference materials from past or related trials.
+    
+        User-Provided (Trial-Specific) Inputs:
+            - Trial Conditions: The medical condition(s) being studied.
+            - Trial Outcomes: The goals or expected results of the trial.
+    
+    Instructions:
+        1. Select only those inclusion and exclusion criteria from the provided documents that match the trial-specific inputs.
+        2. For each selected criterion, include:
+            - The exact original statement from the source document (as "source").
+            - The appropriate classification (as "class") based on the 14 predefined key factors.
+        3. Do NOT generate or modify any criteria on your own. Use only the text exactly as found in the source documents.
+        4. Ensure that all extracted criteria align with the trial rationale.
+    
+    Key Factor Classification Categories:
+        - Age
+        - Gender
+        - Health Condition/Status
+        - Clinical and Laboratory Parameters (include HbA1c here)
+        - Medication Status
+        - Informed Consent
+        - Ability to Comply with Study Procedures
+        - Lifestyle Requirements
+        - Reproductive Status
+        - Co-morbid Conditions
+        - Recent Participation in Other Clinical Trials
+        - Allergies and Drug Reactions
+        - Mental Health Disorders
+        - Infectious Diseases
+        - Other (if applicable)
+    
+    Response Format:
+        {
+          "inclusionCriteria": [
+            {
+              "criteria": "<Selected inclusion criterion>",
+              "source": "<Exact original text from document>",
+              "class": "<Appropriate classification>"
+            }
+          ],
+          "exclusionCriteria": [
+            {
+              "criteria": "<Selected exclusion criterion>",
+              "source": "<Exact original text from document>",
+              "class": "<Appropriate classification>"
+            }
+          ]
+        }
+    
+    Notes:
+        - Always return the output strictly in the specified JSON format.
+        - Never include generated or assumed content.
+        - The "source" must always contain the unmodified original statement from the provided documents.
+    """
 
-                Role:
-                You are a Clinical Trial Eligibility Criteria Writer Agent. 
-                You are responsible for writing Inclusion and Exclusion Criteria for a Clinical trial based on provided inputs.
-
-                Permanent Inputs:
-                1. Medical Trial Rationale – The rationale for conducting the trial.
-                2. Similar/Existing Medical Trial Documents – Reference documents from similar trials to guide the criteria selection.
-
-                Additional User-Provided Inputs (Trial-Specific):
-                1. Trial Conditions – The medical conditions being assessed in the trial.
-                2. Trial Outcomes – The expected or desired outcomes of the trial.
-
-                Steps:
-                1. From the provided input documents, draft **comprehensive Inclusion and Exclusion Criteria** for the medical trial. (Always provide info if the drug value or range is inclusive or exclusive.)
-                2. Provide **Original Statement(s)** used from documents for each criterion.
-                3. Ensure that the criteria align with the trial rationale.
-                4. Tag Inclusion Criteria and Exclusion Criteria based on the following 14 key factors:
-                    - Age
-                    - Gender
-                    - Health Condition/Status
-                    - Clinical and Laboratory Parameters - (provide HbA1c in this category)
-                    - Medication Status
-                    - Informed Consent
-                    - Ability to Comply with Study Procedures
-                    - Lifestyle Requirements
-                    - Reproductive Status
-                    - Co-morbid Conditions
-                    - Recent Participation in Other Clinical Trials
-                    - Allergies and Drug Reactions
-                    - Mental Health Disorders
-                    - Infectious Diseases
-                    - Other (if applicable)
-
-                Response Format:
-
-                ### Example output format
-
-                {
-                  "inclusionCriteria": [
-                    {
-                      "criteria": "Male or female, 18 years or older at the time of signing informed consent",
-                      "source": "Participants must be at least 18 years old at the time of enrollment",
-                      "class": "Age"
-                    }
-                  ],
-                  "exclusionCriteria": [
-                    {
-                      "criteria": "Participants with a history of severe allergic reactions to study medication",
-                      "source": "Subjects with known hypersensitivity to the investigational drug or any of its components",
-                      "class": "Allergies and Drug Reactions"
-                    }
-                  ]
-                }
-
-                Important Notes:
-                  The "source" object must contain actual original statements as values.
-                  Do not modify the original statements; they must remain as they appear in the trial documents.
-                  Ensure consistency between extracted criteria, user inputs, and trial goals.
-                  Always stick to the provided JSON response format. Your response will be always be this JSON only.
-                  You do not have to write any code to generate this response.
-            """
 )
 
 filter_role = ("""
@@ -484,12 +486,13 @@ json_object:
 
 **Example 4:**  
 *Input Sentence:*  
-"History of hypersensitivity to exenatide or liraglutide (System Generated)"  
+"History of hypersensitivity to exenatide or liraglutide (System Generated) and Age 18 and older"  
 *Expected Output:*  
 json_object:
 {
   "tags": [
-    "Drug allergy: exenatide/liraglutide"
+    "Drug allergy: exenatide/liraglutide",
+    "Age": >= 18
   ]
 }
 
