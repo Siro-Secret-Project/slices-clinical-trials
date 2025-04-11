@@ -1,11 +1,19 @@
 def process_categorized_data(categorized_data):
     def build_documents(items, category, entry_type):
         documents = []
+        seen = set()  # To track (criteriaID, tag) pairs
+
         for item in items:
             tags = item.get("tags", [])
-            if tags:
-                for tag in tags:
-                    final_tag = tag.split(":")[0]
+            if not tags:
+                tags = ["Others"]
+
+            for tag in tags:
+                final_tag = tag.split(":")[0]
+                key = (item["criteriaID"], final_tag)  # Uniqueness key
+
+                if key not in seen:
+                    seen.add(key)
                     all_tags.add(final_tag)
                     documents.append({
                         "criteriaID": item["criteriaID"],
@@ -19,19 +27,6 @@ def process_categorized_data(categorized_data):
                         "count": item["count"],
                         "category": category
                     })
-            else:
-                documents.append({
-                    "criteriaID": item["criteriaID"],
-                    "criteria": item["criteria"],
-                    "source": item["source"],
-                    "status": "pastTrials",
-                    "tag": "Others",
-                    "type": entry_type,
-                    "score": item["operational_score"],
-                    "best_trial": item["best_trial_id"],
-                    "count": item["count"],
-                    "category": category
-                })
         return documents
 
     # Initialize with default tags
