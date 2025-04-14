@@ -83,6 +83,8 @@ def generate_trial_eligibility_criteria(trialId: str, trail_documents_ids: List[
             criteria = item["criteria"]
             tags = eligibility_agent.generate_tags(criteria)
             item["tags"] = tags
+        
+        print(generated_inclusion_criteria[0])
 
         # Categorize the Generated and User Provided data into Predefined buckets
         logger.debug("Categorizing Generated Eligibility")

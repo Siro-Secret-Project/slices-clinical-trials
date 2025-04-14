@@ -18,6 +18,9 @@ criteria_categories = [
     "Mental Health Disorders", "Infectious Diseases", "Other", "Age"
 ]
 
+cedric_criteria_categories = ["Common to All Clinical Trials", "Common to Type 2 Diabetes Studies", "Common to the Study Drug", "Other"]
+
+
 
 def _generate_tags(criteria_text):
     """
@@ -171,13 +174,19 @@ def categorize_generated_criteria(generated_inclusion_criteria, generated_exclus
         categorized_data.setdefault(class_name, {"Inclusion": [], "Exclusion": []})
 
     for class_item in criteria_categories:
-        current_list = [item for item in generated_inclusion_criteria if item["class"] == class_item]
+        current_list = []
+        for item in generated_inclusion_criteria:
+            for class_name in item["class"]:
+                current_list.append(item)
         merged_data = merge_by_tag(current_list)
         categorized_data[class_item]["Inclusion"] = merged_data
 
     for class_item in criteria_categories:
-        current_list = [item for item in generated_exclusion_criteria if item["class"] == class_item]
+        current_list = []
+        for item in generated_exclusion_criteria:
+            for class_name in item["class"]:
+                current_list.append(item)
         merged_data = merge_by_tag(current_list)
-        categorized_data[class_item]["Exclusion"] = merged_data
+        categorized_data[class_item]["Inclusion"] = merged_data
 
     return categorized_data
