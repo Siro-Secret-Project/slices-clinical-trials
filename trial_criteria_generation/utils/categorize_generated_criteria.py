@@ -2,7 +2,6 @@ import json
 import re
 from utils.generate_object_id import generate_object_id
 from trial_criteria_generation.utils.prompts_file import merge_prompt, llama_prompt
-import concurrent.futures
 from providers.aws.bedrock_connection import BedrockLlamaClient
 from trial_document_search.utils.logger_setup import Logger
 
@@ -174,19 +173,15 @@ def categorize_generated_criteria(generated_inclusion_criteria, generated_exclus
         categorized_data.setdefault(class_name, {"Inclusion": [], "Exclusion": []})
 
     for class_item in criteria_categories:
-        current_list = []
-        for item in generated_inclusion_criteria:
-            for class_name in item["class"]:
-                current_list.append(item)
+        current_list = [item for item in generated_inclusion_criteria if class_item in item["class"]]
         merged_data = merge_by_tag(current_list)
         categorized_data[class_item]["Inclusion"] = merged_data
 
     for class_item in criteria_categories:
-        current_list = []
-        for item in generated_exclusion_criteria:
-            for class_name in item["class"]:
-                current_list.append(item)
+        current_list = [item for item in generated_exclusion_criteria if class_item in item["class"]]
         merged_data = merge_by_tag(current_list)
-        categorized_data[class_item]["Inclusion"] = merged_data
+        categorized_data[class_item]["Exclusion"] = merged_data
+
+    logger.debug(f"DONE")
 
     return categorized_data
