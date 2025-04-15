@@ -25,7 +25,7 @@ def process_categorized_data(categorized_data):
                         "score": item["operational_score"],
                         "best_trial": item["best_trial_id"],
                         "count": item["count"],
-                        "category": category
+                        "category": item["class"]
                     })
         return documents
 

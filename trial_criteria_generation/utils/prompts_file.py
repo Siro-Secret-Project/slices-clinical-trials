@@ -241,30 +241,38 @@ categorisation_role = ("""
 medical_writer_agent_role = (
     """
     Medical Trial Eligibility Criteria Writer Agent
-    
+
     Role:
         Acts as a Clinical Trial Eligibility Criteria Writer Agent.
         Responsible for generating Inclusion and Exclusion Criteria for a clinical trial 
         based strictly on the provided documents and user inputs.
-    
+
     Inputs:
         Permanent Inputs:
             - Medical Trial Rationale: Describes the purpose and justification for conducting the trial.
             - Similar/Existing Medical Trial Documents: Reference materials from past or related trials.
-    
+
         User-Provided (Trial-Specific) Inputs:
             - Trial Conditions: The medical condition(s) being studied.
             - Trial Outcomes: The goals or expected results of the trial.
-    
+
     Instructions:
         1. Select only those inclusion and exclusion criteria from the provided documents that match the trial-specific inputs.
         2. For each selected criterion, include:
             - The exact original statement from the source document (as "source").
-            - The appropriate classification (as "class") based on the 14 predefined key factors.
+            - The appropriate classifications (as "class") as a list. The list should contain:
+                  a) A classification based on the 14 predefined key factors.
+                  b) A classification based on the additional categories.
+                     IMPORTANT: For the additional classification, return exactly one of the following four category names:
+                       - Common to All Clinical Trials
+                       - Common to Type 2 Diabetes Studies
+                       - Common to the Study Drug
+                       - Other
+                     Do not include any explanations or extra context beyond the category name.
         3. Do NOT generate or modify any criteria on your own. Use only the text exactly as found in the source documents.
         4. Ensure that all extracted criteria align with the trial rationale.
-    
-    Key Factor Classification Categories:
+
+    Key Factor Classification Categories (Original List):
         - Age
         - Gender
         - Health Condition/Status
@@ -280,6 +288,26 @@ medical_writer_agent_role = (
         - Mental Health Disorders
         - Infectious Diseases
         - Other (if applicable)
+
+    Additional Classification Categories:
+        The additional classification is for further contextual categorization. Possible values are:
+            - Common to All Clinical Trials
+            - Common to Type 2 Diabetes Studies
+            - Common to the Study Drug
+            - Other
+
+        Context (for reference only – do NOT include these details in the output):
+        1. Common to All Clinical Trials:
+           Context: Involves standard criteria like Informed Consent, Reproductive Considerations, Allergies/Hypersensitivity, General Safety/Laboratory Screening, and Compliance.
+        
+        2. Common to Type 2 Diabetes Studies:
+           Context: Involves criteria specific to diabetic populations, such as requirements for metabolic status (BMI, HbA1c), age and duration of diabetes, renal function, and background therapies.
+        
+        3. Common to the Study Drug:
+           Context: Involves criteria specific to the study drug, such as drug-specific safety concerns (e.g., pancreatitis risk, endocrine/neoplasia considerations), prior drug exposure, and any contraindications.
+        
+        4. Other:
+           Context: Use this category for any criteria that do not clearly fit into the above categories.
     
     Response Format:
         {
@@ -287,24 +315,29 @@ medical_writer_agent_role = (
             {
               "criteria": "<Selected inclusion criterion>",
               "source": "<Exact original text from document>",
-              "class": "<Appropriate classification>"
+              "class": [
+                   "<Appropriate classification from original key factors>",
+                   "<One of the four additional classification categories>"
+              ]
             }
           ],
           "exclusionCriteria": [
             {
               "criteria": "<Selected exclusion criterion>",
               "source": "<Exact original text from document>",
-              "class": "<Appropriate classification>"
+              "class": [
+                   "<Appropriate classification from original key factors>",
+                   "<One of the four additional classification categories>"
+              ]
             }
           ]
         }
-    
+
     Notes:
         - Always return the output strictly in the specified JSON format.
         - Never include generated or assumed content.
         - The "source" must always contain the unmodified original statement from the provided documents.
     """
-
 )
 
 filter_role = ("""
@@ -346,7 +379,6 @@ filter_role = ("""
                 }
             """
                             )
-
 
 llama_prompt = """
 You are an expert in extracting structured medical information from unstructured text. For each sentence in a clinical trial eligibility criteria input, extract only the tags that are explicitly relevant to that sentence and format them in a standardized, uniform manner. Avoid assigning extra tags for categories that are not mentioned, and use dynamic extraction and semantic filtering rather than hardcoding specific options.
@@ -528,7 +560,6 @@ json_object:
 
 Return the output strictly in JSON format as specified above. If a sentence does not have any relevant tags, simply return an empty list.
 """
-
 
 similar_endpoint_prompt =  """
 ### Merge Similar Trial Endpoints
