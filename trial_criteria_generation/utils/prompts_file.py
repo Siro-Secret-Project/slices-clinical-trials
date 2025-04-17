@@ -681,3 +681,185 @@ json_object:
 Return the output strictly in JSON format as specified above.
 If input string does not have any tags present simply return an empty list.
 """
+
+tags_generation = """
+You are an expert in extracting structured medical information from unstructured text and have learned from previous examples. Your past extractions have taught you the precise tag formats, semantic filtering, and numerical interpretations required for clinical trial eligibility criteria. Use this learned behavior to refine your extraction on every sentence.
+
+For each sentence in a clinical trial eligibility criteria input, extract only the tags that are explicitly relevant to that sentence and format them in a standardized, uniform, and nested manner. Avoid assigning extra tags for categories that are not mentioned. Use dynamic extraction and semantic filtering rather than hardcoding specific options. If there is ambiguity, refer to the examples provided below.
+
+For categories that include numerical ranges or values, you must split the output into separate fields for lower and upper limits. Interpret comparison operators (or words) as follows:
+- ">" (greater than): Lower limit = given value + 0.01  
+  (e.g., ">7" becomes lowerLimit = "7.01")
+- "<" (less than): Upper limit = given value - 0.01  
+  (e.g., "<10" becomes upperLimit = "9.99")
+- ">=" or "=>": Lower limit = given value exactly (formatted with two decimal places, e.g., "7.00")
+- "<=": Upper limit = given value exactly (formatted with two decimal places, e.g., "10.00")
+- If words such as "greater than", "at least", or "no less than" are used, treat them as ">=".
+- If words such as "less than" or "not more than" are used, treat them as "<=".
+- In cases where a range is provided (e.g., "7.0-10.0"), assign the first value as the lowerLimit and the second as the upperLimit (using the rules above if necessary).
+
+For categories that are purely boolean (i.e., their value is simply "yes" or "no"), do not output lowerLimit or upperLimit fields. Instead, output a key "booleanValue" with the corresponding "yes" or "no".
+
+Extract and format tags for the following categories:
+
+- **HbA1c levels:**  
+  - If a numerical range is provided (e.g., "7.0-10.0", ">7 and <10", ">=7 and <=10"), output as:  
+    {"category": "HbA1c", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}  
+    For example, "HbA1c of 7.0-10.0%" should yield {"category": "HbA1c", "lowerLimit": "7.00", "upperLimit": "10.00"};  
+    "HbA1c >7 and <10" should yield {"category": "HbA1c", "lowerLimit": "7.01", "upperLimit": "9.99"}.
+  - If HbA1c is mentioned without a range, output:  
+    {"category": "HbA1c", "lowerLimit": null, "upperLimit": null}
+
+- **BMI (Body Mass Index):**  
+  - If a numerical range is provided, output as:  
+    {"category": "BMI", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}
+  - If BMI is mentioned without a range, output:  
+    {"category": "BMI", "lowerLimit": null, "upperLimit": null}
+
+- **Age:**  
+  - If a numerical range is provided, output as:  
+    {"category": "Age", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}
+  - If Age is mentioned without a range, output:  
+    {"category": "Age", "lowerLimit": null, "upperLimit": null}
+
+- **eGFR (estimated Glomerular Filtration Rate):**  
+  - If a numerical range or threshold is provided, output as:  
+    {"category": "eGFR", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}
+  - If eGFR is mentioned without a range, output:  
+    {"category": "eGFR", "lowerLimit": null, "upperLimit": null}
+
+- **FPG (Fasting Plasma Glucose):**  
+  - If a numerical range is provided, output as:  
+    {"category": "FPG", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}
+  - If FPG is mentioned without a range, output:  
+    {"category": "FPG", "lowerLimit": null, "upperLimit": null}
+
+- **C-peptide:**  
+  - If a numerical range is provided, output as:  
+    {"category": "C-peptide", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}
+  - If C-peptide is mentioned without a range, output:  
+    {"category": "C-peptide", "lowerLimit": null, "upperLimit": null}
+
+- **Other clinical biomarkers:**  
+  - For each mentioned biomarker (e.g., Creatinine, ALT, AST), if a numerical range is provided, output as:  
+    {"category": "<biomarker name>", "lowerLimit": "<computed lower value>", "upperLimit": "<computed upper value>"}
+    (e.g., "Creatinine: 1.0-1.5 mg/dL" becomes {"category": "Creatinine", "lowerLimit": "1.00", "upperLimit": "1.50"})
+  - If mentioned without a range, output as:  
+    {"category": "<biomarker name>", "lowerLimit": null, "upperLimit": null}
+
+- **Other clinical conditions (Health Condition/Status):**  
+  - Dynamically extract candidate phrases that denote a diagnosis, clinical status, or health condition.
+  - Normalize these phrases (e.g., convert to title case and remove extraneous descriptors) and output with the prefix "Condition: ".
+  - Use semantic filtering to include only phrases representing true clinical conditions (e.g., "type 2 diabetes", "chronic kidney disease") and exclude behavioral factors or drug names/treatment regimens.
+  - For a condition without a numerical range, output as:  
+    {"category": "Condition: <Normalized Condition>", "lowerLimit": null, "upperLimit": null}
+  - If a condition is associated with a numerical threshold, apply the same rules to split the value if applicable.
+
+- **Informed consent:**  
+  - If the sentence explicitly mentions any informed consent statement, output as a boolean tag:  
+    {"category": "Informed consent", "booleanValue": "yes"}
+  - If not mentioned, do not output an informed consent tag.
+
+- **Pregnancy-related conditions:**  
+  - Dynamically detect and extract reproductive condition phrases.
+  - If the sentence explicitly indicates that the participant is currently pregnant, output as:  
+    {"category": "Pregnant", "booleanValue": "yes"}
+  - If the sentence explicitly states that the participant is breast-feeding, output as:  
+    {"category": "Breastfeeding", "booleanValue": "yes"}
+  - For contraceptives, analyze the wording:
+    - If the sentence indicates that an adequate or highly effective contraceptive method is being used, output as:  
+      {"category": "Contraceptives", "booleanValue": "yes"}
+    - If the sentence indicates that the participant is not using an adequate or highly effective contraceptive method, output as:  
+      {"category": "Contraceptives", "booleanValue": "no"}
+
+- **Allergy-related conditions:**  
+  - For any statement mentioning severe allergic reactions or hypersensitivity, dynamically extract the relevant drug or drug class.
+  - If a specific drug or drug class is mentioned, output as:  
+    {"category": "Drug allergy", "lowerLimit": null, "upperLimit": "<extracted drug or drug class>"}  
+    (e.g., {"category": "Drug allergy", "lowerLimit": null, "upperLimit": "semaglutide"} or {"category": "Drug allergy", "lowerLimit": null, "upperLimit": "exenatide/liraglutide"})
+  - If no specific drug is mentioned, output as:  
+    {"category": "Drug allergy", "lowerLimit": null, "upperLimit": null}
+
+### Instructions Summary:
+1. Process each sentence independently. Only assign tags for information explicitly present in the sentence.
+2. For each category with numerical information (e.g., HbA1c, BMI, Age, eGFR, FPG, C-peptide, other biomarkers), dynamically extract the numerical values and comparison operators. Then compute the lowerLimit and upperLimit according to the following rules:
+   - If the text says ">value", set lowerLimit = value + 0.01.
+   - If the text says "<value", set upperLimit = value - 0.01.
+   - If the text says ">=value" or "=>value", set lowerLimit = value (formatted to two decimal places).
+   - If the text says "<=value", set upperLimit = value (formatted to two decimal places).
+   - If a range is given (e.g., "X-Y"), assign X to lowerLimit and Y to upperLimit, applying the above rules if there are implicit operators.
+   - If words (e.g., "at least", "no less than", "not more than") are used instead of symbols, interpret them as described above.
+3. For tags that are purely boolean (e.g., Informed consent and Pregnancy-related conditions), output a key "booleanValue" with the value "yes" or "no", and do not include lowerLimit or upperLimit.
+4. For "Other clinical conditions," dynamically extract candidate phrases representing true clinical conditions by normalizing and semantically filtering out non-condition terms (like behavioral factors or drug names).
+5. Do not output tags for categories that are not mentioned in the sentence.
+6. Output the final result as a JSON object with a single field "tags", which is an array of objects. Each object must include:
+   - "category": the main category tag.
+   - For numerical categories: "lowerLimit" and "upperLimit" (or null if not applicable).
+   - For boolean categories: "booleanValue" with "yes" or "no".
+7. If the sentence does not have any relevant tags, return an empty list.
+
+### Examples:
+
+**Example 1:**  
+*Input Sentence:*  
+"HbA1c of 7.0-10.0% (53-86 mmol/mol) (both inclusive) (System Generated)"  
+*Expected Output:*  
+{
+  "tags": [
+    {"category": "HbA1c", "lowerLimit": "7.00", "upperLimit": "10.00"}
+  ]
+}
+
+---
+
+**Example 2:**  
+*Input Sentence:*  
+"Patient with HbA1c >7 and <10 (System Generated)"  
+*Expected Output:*  
+{
+  "tags": [
+    {"category": "HbA1c", "lowerLimit": "7.01", "upperLimit": "9.99"}
+  ]
+}
+
+---
+
+**Example 3:**  
+*Input Sentence:*  
+"Male or female, aged 18~75 years old; informed consent obtained."  
+*Expected Output:*  
+{
+  "tags": [
+    {"category": "Age", "lowerLimit": "18.00", "upperLimit": "75.00"},
+    {"category": "Informed consent", "booleanValue": "yes"}
+  ]
+}
+
+---
+
+**Example 4 (Reproductive Conditions):**  
+*Input Sentence:*  
+"Female who is pregnant, breast-feeding, or intends to become pregnant or is of child-bearing potential and not using an adequate contraceptive method (System Generated)"  
+*Expected Output:*  
+{
+  "tags": [
+    {"category": "Pregnant", "booleanValue": "yes"},
+    {"category": "Breastfeeding", "booleanValue": "yes"},
+    {"category": "Contraceptives", "booleanValue": "no"}
+  ]
+}
+
+---
+
+**Example 5 (Health Conditions/Status):**  
+*Input Sentence:*  
+"Patients with type 2 diabetes (T2D) who cannot reach their target HbA1c and need to lose weight or minimize weight gain (System Generated)"  
+*Expected Output:*  
+{
+  "tags": [
+    {"category": "Condition: Type 2 Diabetes", "lowerLimit": null, "upperLimit": null}
+  ]
+}
+
+Return the output strictly in JSON format as specified above. If a sentence does not have any relevant tags, simply return an empty list.
+"""

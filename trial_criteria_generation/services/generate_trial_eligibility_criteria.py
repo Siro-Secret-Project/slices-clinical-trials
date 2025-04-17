@@ -16,6 +16,7 @@ from trial_criteria_generation.utils.fetch_additional_metrics import fetch_addit
 from trial_criteria_generation.utils.process_categorized_data import process_categorized_data
 from trial_criteria_generation.utils.prepare_similar_documents import prepare_similar_documents
 from trial_criteria_generation.utils.categorize_and_merge_data import categorize_and_merge_data
+from trial_criteria_generation.utils.process_criteria_tag_list import process_criteria_tag_list
 
 # Setup Logger
 logger = Logger("trial_eligibility_criteria").get_logger()
@@ -49,8 +50,6 @@ def generate_trial_eligibility_criteria(trialId: str, trail_documents_ids: List[
         # Create Empty Lists to store the outputs
         generated_inclusion_criteria = []
         generated_exclusion_criteria = []
-        drug_ranges = []
-        time_line = []
 
         logger.debug(f"Generating trial eligibility criteria")
         batches = [similar_documents[i] for i in range(0, len(similar_documents))]
@@ -73,18 +72,13 @@ def generate_trial_eligibility_criteria(trialId: str, trail_documents_ids: List[
         assign_unique_ids(generated_exclusion_criteria)
         logger.debug(f"Generated trial eligibility criteria")
 
-        # Generate Tags
-        for item in generated_inclusion_criteria:
-            criteria = item["criteria"]
-            tags = eligibility_agent.generate_tags(criteria)
-            item["tags"] = tags
+        logger.debug(generated_inclusion_criteria[0])
 
-        for item in generated_exclusion_criteria:
-            criteria = item["criteria"]
-            tags = eligibility_agent.generate_tags(criteria)
-            item["tags"] = tags
-        
-        print(generated_inclusion_criteria[0])
+        # Add Type and Main Tag to Inclusion Criteria
+        process_criteria_tag_list(generated_inclusion_criteria)
+        logger.info(f"Added Type and Main tag to Inclusion criteria")
+        process_criteria_tag_list(generated_exclusion_criteria)
+        logger.info(f"Added Type and Main tag to Exclusion criteria")
 
         # Categorize the Generated and User Provided data into Predefined buckets
         logger.debug("Categorizing Generated Eligibility")

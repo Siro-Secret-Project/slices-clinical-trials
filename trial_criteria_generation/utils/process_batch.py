@@ -8,6 +8,7 @@ def process_batch(batch: Dict[str, Any], eligibility_agent: TrialEligibilityAgen
     if batch["document"]["inclusionCriteria"] != "inclusion criteria not available" and batch["document"][
         "exclusionCriteria"] != "exclusion criteria not available":
         draft_criteria = DraftEligibilityCriteria(
+            nctId=batch["nctId"],
             sample_trial_rationale=user_inputs.get("rationale") or "No rationale provided",
             similar_trial_documents=batch,
             user_provided_inclusion_criteria=user_inputs.get("inclusionCriteria") or "No inclusion Criteria provided",

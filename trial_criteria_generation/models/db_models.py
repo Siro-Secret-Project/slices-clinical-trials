@@ -74,6 +74,7 @@ class CategorizedData(BaseModel):
     Other: InclusionExclusion
 
 class DraftEligibilityCriteria(BaseModel):
+    nctId: str
     sample_trial_rationale: str
     similar_trial_documents: Dict
     user_provided_inclusion_criteria: str

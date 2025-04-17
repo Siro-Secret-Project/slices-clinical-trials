@@ -1,9 +1,5 @@
-import os
-import subprocess
-from rq import Worker
 from fastapi import APIRouter, Response, status
 from database.trial_criteria_generation.save_empty_document import save_empty_document
-from trial_criteria_generation.utils.redis_connection import redis_conn, task_queue, redis_url
 from trial_criteria_generation.models.routes_models import BaseResponse, GenerateEligibilityCriteria
 from trial_criteria_generation.services.generate_trial_eligibility_criteria import generate_trial_eligibility_criteria
 

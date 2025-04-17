@@ -111,7 +111,7 @@ def _process_criteria(criteria_list, category):
         return []
 
 
-def merge_by_tag(data, tags_not_to_consider: list = []):
+def merge_by_tag(data, tags_not_to_consider: list = None):
     """
     Merges entries in the data list based on their tags, combining sources and avoiding redundancy.
 
@@ -125,9 +125,10 @@ def merge_by_tag(data, tags_not_to_consider: list = []):
     tag_to_data = {}  # Dictionary to map tags to merged data
 
     for item in data:
-        for criteria_tag in item["tags"]:
+        for tag in item["tags"]:
+            criteria_tag = tag["main-tag"]
             # Normalize the tag by removing .0 and spaces for consistency
-            normalized_tag = criteria_tag.replace(".0", "").strip()
+            normalized_tag = criteria_tag.strip()
             if normalized_tag in tags_not_to_consider:
                 continue
             # If tag not seen before, create new entry
@@ -137,6 +138,7 @@ def merge_by_tag(data, tags_not_to_consider: list = []):
                     "class": item["class"],
                     "source": item["source"].copy(),
                     "tags": {normalized_tag},
+                    "tags-list": [tag],
                     "criteriaID": item["criteriaID"]  # Keeping first encountered ID
                 }
             else:
@@ -146,12 +148,13 @@ def merge_by_tag(data, tags_not_to_consider: list = []):
                 # Update sources (union of both)
                 existing["source"].update(item["source"])
 
-                # Keep the longer criteria text
-                if len(item["criteria"]) > len(existing["criteria"]):
-                    existing["criteria"] = item["criteria"]
-
                 # Add any additional tags (though normalized_tag should be same)
                 existing["tags"].add(normalized_tag)
+
+                # Add all the detailed tags
+                for tag_item in item["tags"]:
+                    existing["tags-list"].append(tag_item)
+
 
     # Convert the dictionary values to a list
     merged_data = list(tag_to_data.values())
@@ -159,6 +162,7 @@ def merge_by_tag(data, tags_not_to_consider: list = []):
     # Convert sets back to lists for consistent output format
     for item in merged_data:
         item["tags"] = list(item["tags"])
+        item["tags-list"] = list({tuple(sorted(d.items())): d for d in item["tags-list"]}.values())
 
     return merged_data
 
@@ -174,12 +178,16 @@ def categorize_generated_criteria(generated_inclusion_criteria, generated_exclus
 
     for class_item in criteria_categories:
         current_list = [item for item in generated_inclusion_criteria if class_item in item["class"]]
-        merged_data = merge_by_tag(current_list)
+        if class_item == "Age":
+            tags_not_to_consider = ["Informed consent : yes"]
+        else:
+            tags_not_to_consider = []
+        merged_data = merge_by_tag(current_list, tags_not_to_consider)
         categorized_data[class_item]["Inclusion"] = merged_data
 
     for class_item in criteria_categories:
         current_list = [item for item in generated_exclusion_criteria if class_item in item["class"]]
-        merged_data = merge_by_tag(current_list)
+        merged_data = merge_by_tag(current_list, [])
         categorized_data[class_item]["Exclusion"] = merged_data
 
     logger.debug(f"DONE")
